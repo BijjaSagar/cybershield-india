@@ -3,20 +3,40 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import {
   Shield, Eye, EyeOff, Lock, Mail, User, Building2,
   Phone, AlertCircle, CheckCircle2, ChevronRight,
 } from "lucide-react";
 
 const plans = [
-  { id: "kavach", name: "Kavach Basic", price: "₹999/mo", employees: "1–10 employees", color: "border-slate-600" },
-  { id: "suraksha", name: "Suraksha Pro", price: "₹2,499/mo", employees: "10–50 employees", color: "border-blue-500", popular: true },
-  { id: "rakshak", name: "Rakshak Enterprise", price: "₹3,999/mo", employees: "50–200 employees", color: "border-purple-500" },
+  {
+    id: "kavach",
+    name: "Kavach Basic",
+    price: "₹999/mo",
+    employees: "1–10 employees",
+    color: "border-slate-600",
+  },
+  {
+    id: "suraksha",
+    name: "Suraksha Pro",
+    price: "₹2,499/mo",
+    employees: "10–50 employees",
+    color: "border-blue-500",
+    popular: true,
+  },
+  {
+    id: "rakshak",
+    name: "Rakshak Enterprise",
+    price: "₹3,999/mo",
+    employees: "50–200 employees",
+    color: "border-purple-500",
+  },
 ];
 
 export default function SignupPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1); // 1 = account details, 2 = plan selection
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -52,10 +72,46 @@ export default function SignupPage() {
 
   async function handleSignup() {
     setLoading(true);
-    // Demo: simulate API call — replace with real auth + DB call
-    await new Promise((r) => setTimeout(r, 1200));
-    // In production: POST /api/auth/register { ...form, plan: selectedPlan }
-    router.push("/dashboard");
+    setError("");
+    try {
+      // 1. Register user
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          phone: form.phone,
+          company: form.company,
+          plan: selectedPlan,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Auto sign in after registration
+      const signInRes = await signIn("credentials", {
+        email: form.email.toLowerCase(),
+        password: form.password,
+        redirect: false,
+      });
+
+      if (signInRes?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        // Registration worked but auto-login failed — send to login
+        router.push("/login?registered=1");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    }
     setLoading(false);
   }
 
@@ -92,7 +148,7 @@ export default function SignupPage() {
 
         <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-8">
 
-          {/* STEP 1 — Account Details */}
+          {/* STEP 1 */}
           {step === 1 && (
             <>
               <h2 className="text-lg font-semibold text-white mb-6">Create your account</h2>
@@ -110,28 +166,18 @@ export default function SignupPage() {
                     <label className="block text-sm text-slate-400 mb-1.5">Full Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => update("name", e.target.value)}
-                        placeholder="Rahul Sharma"
-                        required
-                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                      />
+                      <input type="text" value={form.name} onChange={(e) => update("name", e.target.value)}
+                        placeholder="Rahul Sharma" required
+                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm text-slate-400 mb-1.5">Phone</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => update("phone", e.target.value)}
-                        placeholder="+91 98765 43210"
-                        required
-                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                      />
+                      <input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)}
+                        placeholder="+91 98765 43210" required
+                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                     </div>
                   </div>
                 </div>
@@ -140,14 +186,9 @@ export default function SignupPage() {
                   <label className="block text-sm text-slate-400 mb-1.5">Company Name</label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      value={form.company}
-                      onChange={(e) => update("company", e.target.value)}
-                      placeholder="Sharma Enterprises Pvt Ltd"
-                      required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                    />
+                    <input type="text" value={form.company} onChange={(e) => update("company", e.target.value)}
+                      placeholder="Sharma Enterprises Pvt Ltd" required
+                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                   </div>
                 </div>
 
@@ -155,14 +196,9 @@ export default function SignupPage() {
                   <label className="block text-sm text-slate-400 mb-1.5">Work Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => update("email", e.target.value)}
-                      placeholder="rahul@sharma-enterprises.com"
-                      required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                    />
+                    <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
+                      placeholder="rahul@sharma-enterprises.com" required
+                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                   </div>
                 </div>
 
@@ -170,14 +206,10 @@ export default function SignupPage() {
                   <label className="block text-sm text-slate-400 mb-1.5">Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type={showPass ? "text" : "password"}
-                      value={form.password}
+                    <input type={showPass ? "text" : "password"} value={form.password}
                       onChange={(e) => update("password", e.target.value)}
-                      placeholder="Min. 8 characters"
-                      required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                    />
+                      placeholder="Min. 8 characters" required
+                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                     <button type="button" onClick={() => setShowPass(!showPass)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -189,52 +221,46 @@ export default function SignupPage() {
                   <label className="block text-sm text-slate-400 mb-1.5">Confirm Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="password"
-                      value={form.confirmPassword}
+                    <input type="password" value={form.confirmPassword}
                       onChange={(e) => update("confirmPassword", e.target.value)}
-                      placeholder="Re-enter password"
-                      required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
-                    />
+                      placeholder="Re-enter password" required
+                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
-                >
+                <button type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2">
                   Continue to Plan Selection <ChevronRight className="w-4 h-4" />
                 </button>
               </form>
             </>
           )}
 
-          {/* STEP 2 — Plan Selection */}
+          {/* STEP 2 */}
           {step === 2 && (
             <>
               <h2 className="text-lg font-semibold text-white mb-2">Choose your plan</h2>
               <p className="text-sm text-slate-400 mb-6">14-day free trial · Cancel anytime · No credit card needed</p>
 
+              {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-4">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-3 mb-6">
                 {plans.map((plan) => (
-                  <button
-                    key={plan.id}
-                    onClick={() => setSelectedPlan(plan.id)}
+                  <button key={plan.id} onClick={() => setSelectedPlan(plan.id)}
                     className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
                       selectedPlan === plan.id
                         ? `${plan.color} bg-blue-600/10`
                         : "border-slate-700/50 bg-slate-900/40 hover:border-slate-600"
-                    }`}
-                  >
+                    }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          selectedPlan === plan.id ? "border-blue-400" : "border-slate-600"
-                        }`}>
-                          {selectedPlan === plan.id && (
-                            <div className="w-2 h-2 rounded-full bg-blue-400" />
-                          )}
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === plan.id ? "border-blue-400" : "border-slate-600"}`}>
+                          {selectedPlan === plan.id && <div className="w-2 h-2 rounded-full bg-blue-400" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -263,17 +289,12 @@ export default function SignupPage() {
               </div>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-2.5 rounded-lg transition-all text-sm"
-                >
+                <button onClick={() => { setStep(1); setError(""); }}
+                  className="flex-1 border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-2.5 rounded-lg transition-all text-sm">
                   Back
                 </button>
-                <button
-                  onClick={handleSignup}
-                  disabled={loading}
-                  className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-all text-sm"
-                >
+                <button onClick={handleSignup} disabled={loading}
+                  className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-all text-sm">
                   {loading ? "Creating account..." : "Start Free Trial →"}
                 </button>
               </div>
@@ -281,12 +302,9 @@ export default function SignupPage() {
           )}
         </div>
 
-        {/* Sign in link */}
         <p className="text-center text-sm text-slate-500 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
-            Sign in
-          </Link>
+          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">Sign in</Link>
         </p>
 
         <div className="text-center mt-4 text-xs text-slate-600">

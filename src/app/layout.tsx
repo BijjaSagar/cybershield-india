@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "CyberShield India | साइबर सुरक्षा SaaS",
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full bg-[#0a0f1e] text-slate-200 antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

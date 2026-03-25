@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  Shield,
-  Activity,
-  FileText,
-  BarChart3,
-  AlertTriangle,
-  BookOpen,
-  Lock,
-  Settings,
-  Bell,
-  LogOut,
+  Shield, Activity, FileText, BarChart3, AlertTriangle,
+  BookOpen, Lock, Settings, Bell, LogOut,
 } from "lucide-react";
+import { UpgradeButton } from "./upgrade-button";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: BarChart3 },
@@ -27,8 +21,24 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
+const PLAN_LABELS: Record<string, string> = {
+  KAVACH: "Kavach Basic",
+  SURAKSHA: "Suraksha Pro",
+  RAKSHAK: "Rakshak Enterprise",
+};
+
+const PLAN_EMPLOYEES: Record<string, string> = {
+  KAVACH: "Up to 10 employees",
+  SURAKSHA: "Up to 50 employees",
+  RAKSHAK: "Up to 200 employees",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const plan = (session?.user as any)?.plan ?? "SURAKSHA";
+  const orgName = (session?.user as any)?.orgName ?? "Your Organisation";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-60 bg-slate-900/80 border-r border-slate-700/50 backdrop-blur-md flex flex-col z-40">
@@ -81,21 +91,23 @@ export function Sidebar() {
           <Bell className="w-4 h-4" />
           Notifications
         </button>
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
-        </Link>
+        </button>
       </div>
 
       {/* Plan badge */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 space-y-2">
         <div className="rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2 overflow-hidden">
-          <div className="text-xs text-blue-400 font-semibold truncate">Suraksha Pro</div>
-          <div className="text-xs text-slate-500 truncate">Up to 50 employees</div>
+          <div className="text-xs text-blue-400 font-semibold truncate">{PLAN_LABELS[plan]}</div>
+          <div className="text-xs text-slate-500 truncate">{orgName}</div>
+          <div className="text-xs text-slate-600 truncate">{PLAN_EMPLOYEES[plan]}</div>
         </div>
+        <UpgradeButton plan={plan} />
       </div>
     </aside>
   );

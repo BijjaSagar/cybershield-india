@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
@@ -17,19 +18,24 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Demo login — replace with real auth API call
-    await new Promise((r) => setTimeout(r, 800));
-    if (email && password) {
+
+    const res = await signIn("credentials", {
+      email: email.toLowerCase(),
+      password,
+      redirect: false,
+    });
+
+    if (res?.ok) {
       router.push("/dashboard");
+      router.refresh();
     } else {
-      setError("Invalid email or password.");
+      setError("Invalid email or password. Please try again.");
     }
     setLoading(false);
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a0f1e] px-4">
-      {/* Background grid */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none" />
 
       <div className="w-full max-w-md relative">
@@ -102,11 +108,6 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-
-          {/* Demo hint */}
-          <p className="text-center text-xs text-slate-500 mt-4">
-            Demo: enter any email + password to access
-          </p>
         </div>
 
         {/* Sign up link */}
@@ -117,7 +118,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Footer */}
         <div className="text-center mt-4 text-xs text-slate-600">
           <span>CERT-In Compliant · DPDP Act 2023 · </span>
           <span className="text-blue-600">Data stored in India 🇮🇳</span>

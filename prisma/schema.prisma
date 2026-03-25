@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  phone         String?
+  image         String?
+  role          Role      @default(ADMIN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  organization  Organization? @relation(fields: [orgId], references: [id])
+  orgId         String?
+
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+// ─── Organization ────────────────────────────────────────────────────────────
+
+model Organization {
+  id                 String             @id @default(cuid())
+  name               String
+  plan               Plan               @default(SURAKSHA)
+  employeeCount      Int                @default(10)
+  industry           String?
+  gstNumber          String?
+  nodalOfficer       String?
+  nodalEmail         String?
+  nodalPhone         String?
+  certInId           String?
+  dataLocality       String             @default("India")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  subscriptionId     String?
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  trialEndsAt        DateTime?
+  currentPeriodEnd   DateTime?
+
+  users              User[]
+  threats            Threat[]
+  incidents          Incident[]
+  logEntries         LogEntry[]
+  vulnerabilities    Vulnerability[]
+  trainings          TrainingProgress[]
+  complianceItems    ComplianceItem[]
+  payments           Payment[]
+}
+
+enum Plan {
+  KAVACH      // ₹999/mo  — 1-10 employees
+  SURAKSHA    // ₹2499/mo — 10-50 employees
+  RAKSHAK     // ₹3999/mo — 50-200 employees
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+// ─── Threats ─────────────────────────────────────────────────────────────────
+
+model Threat {
+  id          String         @id @default(cuid())
+  orgId       String
+  type        String
+  severity    ThreatSeverity
+  source      String
+  target      String?
+  status      ThreatStatus   @default(ACTIVE)
+  description String?
+  rawLog      String?        @db.Text
+  detectedAt  DateTime       @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+
+  org         Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, detectedAt])
+}
+
+enum ThreatSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum ThreatStatus {
+  ACTIVE
+  INVESTIGATING
+  MITIGATED
+  FALSE_POSITIVE
+}
+
+// ─── Incidents ───────────────────────────────────────────────────────────────
+
+model Incident {
+  id               String         @id @default(cuid())
+  orgId            String
+  title            String
+  severity         ThreatSeverity
+  status           IncidentStatus @default(OPEN)
+  description      String?        @db.Text
+  affectedSystems  String[]
+  certInReported   Boolean        @default(false)
+  certInReportedAt DateTime?
+  certInDeadline   DateTime?
+  detectedAt       DateTime       @default(now())
+  resolvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  org              Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, detectedAt])
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  CONTAINED
+  RESOLVED
+  CLOSED
+}
+
+// ─── Log Vault ───────────────────────────────────────────────────────────────
+
+model LogEntry {
+  id        String         @id @default(cuid())
+  orgId     String
+  source    String
+  type      LogType
+  severity  ThreatSeverity
+  message   String         @db.Text
+  ipAddress String?
+  userId    String?
+  rawData   String?        @db.Text
+  timestamp DateTime       @default(now())
+
+  org       Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, timestamp])
+}
+
+enum LogType {
+  AUTH
+  NETWORK
+  SYSTEM
+  APPLICATION
+  ENDPOINT
+  CLOUD
+}
+
+// ─── Vulnerabilities ─────────────────────────────────────────────────────────
+
+model Vulnerability {
+  id           String         @id @default(cuid())
+  orgId        String
+  cveId        String?
+  title        String
+  severity     ThreatSeverity
+  asset        String
+  cvssScore    Float?
+  description  String?        @db.Text
+  remediation  String?        @db.Text
+  status       VulnStatus     @default(OPEN)
+  discoveredAt DateTime       @default(now())
+  patchedAt    DateTime?
+
+  org          Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+enum VulnStatus {
+  OPEN
+  IN_PROGRESS
+  PATCHED
+  ACCEPTED_RISK
+}
+
+// ─── Training ─────────────────────────────────────────────────────────────────
+
+model TrainingProgress {
+  id            String       @id @default(cuid())
+  orgId         String
+  employeeEmail String
+  employeeName  String
+  moduleId      String
+  moduleName    String
+  completed     Boolean      @default(false)
+  score         Int?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  org           Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ─── Compliance ───────────────────────────────────────────────────────────────
+
+model ComplianceItem {
+  id          String           @id @default(cuid())
+  orgId       String
+  framework   String
+  controlId   String
+  controlName String
+  status      ComplianceStatus @default(NOT_STARTED)
+  evidence    String?          @db.Text
+  notes       String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  updatedAt   DateTime         @updatedAt
+
+  org         Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, framework, controlId])
+}
+
+enum ComplianceStatus {
+  COMPLIANT
+  PARTIAL
+  NON_COMPLIANT
+  NOT_STARTED
+}
+
+// ─── Payments ────────────────────────────────────────────────────────────────
+
+model Payment {
+  id                String        @id @default(cuid())
+  orgId             String
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Int
+  currency          String        @default("INR")
+  plan              Plan
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  org               Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURED
+  FAILED
+  REFUNDED
+}
