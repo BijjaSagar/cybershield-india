@@ -90,7 +90,10 @@ export default function SignupPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Registration failed. Please try again.");
+        // Show actual server error so issues are visible
+        const msg = data.error ?? "Registration failed.";
+        const detail = data.detail ? ` (${data.detail})` : "";
+        setError(msg + detail);
         setLoading(false);
         return;
       }

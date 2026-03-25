@@ -1,10 +1,24 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
+function getConnectionString() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL environment variable is not set.");
+
+  // Remove channel_binding parameter — not supported by @neondatabase/serverless adapter
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete("channel_binding");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 function createPrismaClient() {
-  const adapter = new PrismaNeon({
-    connectionString: process.env.DATABASE_URL!,
-  });
+  const connectionString = getConnectionString();
+  const adapter = new PrismaNeon({ connectionString });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new PrismaClient({ adapter } as any);
 }
 
