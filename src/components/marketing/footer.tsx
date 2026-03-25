@@ -68,7 +68,7 @@ export function Footer() {
               </li>
             </ul>
             <div className="mt-6">
-              <Link href="/login" className="inline-flex px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all">
+              <Link href="/signup" className="inline-flex px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all">
                 Start Free Trial →
               </Link>
             </div>

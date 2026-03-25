@@ -41,7 +41,7 @@ export function Navbar() {
           <Link href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
             Sign In
           </Link>
-          <Link href="#pricing" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all">
+          <Link href="/signup" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all">
             Start Free Trial
           </Link>
         </div>
@@ -63,7 +63,7 @@ export function Navbar() {
           ))}
           <div className="pt-2 flex flex-col gap-2">
             <Link href="/login" className="text-center py-2 rounded-lg border border-slate-600 text-slate-300 text-sm">Sign In</Link>
-            <Link href="#pricing" className="text-center py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold">Start Free Trial</Link>
+            <Link href="/signup" className="text-center py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold">Start Free Trial</Link>
           </div>
         </div>
       )}

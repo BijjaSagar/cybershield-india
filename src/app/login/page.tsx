@@ -109,8 +109,16 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Sign up link */}
+        <p className="text-center text-sm text-slate-500 mt-6">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
+            Start free trial
+          </Link>
+        </p>
+
         {/* Footer */}
-        <div className="text-center mt-6 text-xs text-slate-600">
+        <div className="text-center mt-4 text-xs text-slate-600">
           <span>CERT-In Compliant · DPDP Act 2023 · </span>
           <span className="text-blue-600">Data stored in India 🇮🇳</span>
         </div>
