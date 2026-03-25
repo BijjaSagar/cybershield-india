@@ -3,6 +3,10 @@
 
 import { type Threat, type CertInControl, type Incident, type LogEntry } from "@/types";
 
+// Fixed base time — avoids SSR/client hydration mismatch caused by Date.now()
+const BASE = new Date("2026-03-25T11:30:00.000Z").getTime();
+const t = (offsetMs: number) => new Date(BASE - offsetMs).toISOString();
+
 export const mockThreats: Threat[] = [
   {
     id: "t1",
@@ -12,7 +16,7 @@ export const mockThreats: Threat[] = [
     source_country: "Russia",
     target: "Admin Login Portal",
     attempts: 23,
-    timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
+    timestamp: t(5 * 60000),
     status: "active" as const,
     description: "अज्ञात स्थान से लॉगिन प्रयास: 23 बार असफल। तुरंत कार्रवाई करें।",
   },
@@ -24,7 +28,7 @@ export const mockThreats: Threat[] = [
     source_country: "Ukraine",
     target: "Employee Email",
     attempts: 1,
-    timestamp: new Date(Date.now() - 18 * 60000).toISOString(),
+    timestamp: t(18 * 60000),
     status: "investigating" as const,
     description: "Malicious link clicked in phishing email by 1 employee.",
   },
@@ -36,7 +40,7 @@ export const mockThreats: Threat[] = [
     source_country: "Germany",
     target: "Network Perimeter",
     attempts: 480,
-    timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+    timestamp: t(2 * 3600000),
     status: "resolved" as const,
     description: "Automated port scan detected. Firewall rule applied.",
   },
@@ -48,7 +52,7 @@ export const mockThreats: Threat[] = [
     source_country: "China",
     target: "Business Web App",
     attempts: 7,
-    timestamp: new Date(Date.now() - 4 * 3600000).toISOString(),
+    timestamp: t(4 * 3600000),
     status: "resolved" as const,
     description: "SQL injection attempt on customer portal login form.",
   },
@@ -60,7 +64,7 @@ export const mockThreats: Threat[] = [
     source_country: "India",
     target: "Admin Account",
     attempts: 1,
-    timestamp: new Date(Date.now() - 6 * 3600000).toISOString(),
+    timestamp: t(6 * 3600000),
     status: "resolved" as const,
     description: "Login from new device/location. Verified by user.",
   },
@@ -90,8 +94,8 @@ export const mockIncidents: Incident[] = [
     title: "Ransomware attempt on accounting server",
     severity: "CRITICAL" as const,
     certInCategory: "Ransomware / Crypto Attack",
-    detectedAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    deadline: new Date(Date.now() + 4 * 3600000).toISOString(),
+    detectedAt: t(2 * 3600000),
+    deadline: new Date(BASE + 4 * 3600000).toISOString(),
     status: "draft_ready" as const,
     reportFiled: false,
     affectedSystems: ["Accounting Server (192.168.1.10)", "File Share"],
@@ -102,8 +106,8 @@ export const mockIncidents: Incident[] = [
     title: "Unauthorised data access — customer database",
     severity: "HIGH" as const,
     certInCategory: "Unauthorized Access",
-    detectedAt: new Date(Date.now() - 18 * 3600000).toISOString(),
-    deadline: new Date(Date.now() - 12 * 3600000).toISOString(),
+    detectedAt: t(18 * 3600000),
+    deadline: t(12 * 3600000),
     status: "filed" as const,
     reportFiled: true,
     affectedSystems: ["MySQL DB Server", "Customer Portal"],
@@ -114,8 +118,8 @@ export const mockIncidents: Incident[] = [
     title: "DDoS attack on business website",
     severity: "HIGH" as const,
     certInCategory: "DDoS / Availability Attack",
-    detectedAt: new Date(Date.now() - 3 * 24 * 3600000).toISOString(),
-    deadline: new Date(Date.now() - 2.75 * 24 * 3600000).toISOString(),
+    detectedAt: t(3 * 24 * 3600000),
+    deadline: t(2.75 * 24 * 3600000),
     status: "closed" as const,
     reportFiled: true,
     affectedSystems: ["Website (www.example.com)", "CDN"],
@@ -124,14 +128,14 @@ export const mockIncidents: Incident[] = [
 ];
 
 export const mockLogs: LogEntry[] = [
-  { id: "l1", type: "AUTH", source: "Google Workspace", event: "Failed login - akash@company.com from 45.33.32.156", severity: "HIGH", timestamp: new Date(Date.now() - 5 * 60000).toISOString() },
-  { id: "l2", type: "FIREWALL", source: "Network Perimeter", event: "Blocked inbound connection from 103.21.58.11:3389", severity: "MEDIUM", timestamp: new Date(Date.now() - 12 * 60000).toISOString() },
-  { id: "l3", type: "ENDPOINT", source: "Laptop-AK01", event: "USB device inserted — Kingston DataTraveler 32GB", severity: "LOW", timestamp: new Date(Date.now() - 25 * 60000).toISOString() },
-  { id: "l4", type: "APP", source: "Customer Portal", event: "SQL injection pattern detected in login form — blocked", severity: "HIGH", timestamp: new Date(Date.now() - 4 * 3600000).toISOString() },
-  { id: "l5", type: "AUTH", source: "Microsoft 365", event: "Successful admin login from new location — Bengaluru", severity: "MEDIUM", timestamp: new Date(Date.now() - 6 * 3600000).toISOString() },
-  { id: "l6", type: "CLOUD", source: "AWS Mumbai", event: "S3 bucket policy changed by IAM user dev-bot", severity: "HIGH", timestamp: new Date(Date.now() - 8 * 3600000).toISOString() },
-  { id: "l7", type: "ENDPOINT", source: "Server-01", event: "Patch KB5025221 overdue by 14 days", severity: "MEDIUM", timestamp: new Date(Date.now() - 24 * 3600000).toISOString() },
-  { id: "l8", type: "WEB", source: "Business Website", event: "SSL certificate expires in 12 days", severity: "MEDIUM", timestamp: new Date(Date.now() - 24 * 3600000).toISOString() },
+  { id: "l1", type: "AUTH", source: "Google Workspace", event: "Failed login - akash@company.com from 45.33.32.156", severity: "HIGH", timestamp: t(5 * 60000) },
+  { id: "l2", type: "FIREWALL", source: "Network Perimeter", event: "Blocked inbound connection from 103.21.58.11:3389", severity: "MEDIUM", timestamp: t(12 * 60000) },
+  { id: "l3", type: "ENDPOINT", source: "Laptop-AK01", event: "USB device inserted — Kingston DataTraveler 32GB", severity: "LOW", timestamp: t(25 * 60000) },
+  { id: "l4", type: "APP", source: "Customer Portal", event: "SQL injection pattern detected in login form — blocked", severity: "HIGH", timestamp: t(4 * 3600000) },
+  { id: "l5", type: "AUTH", source: "Microsoft 365", event: "Successful admin login from new location — Bengaluru", severity: "MEDIUM", timestamp: t(6 * 3600000) },
+  { id: "l6", type: "CLOUD", source: "AWS Mumbai", event: "S3 bucket policy changed by IAM user dev-bot", severity: "HIGH", timestamp: t(8 * 3600000) },
+  { id: "l7", type: "ENDPOINT", source: "Server-01", event: "Patch KB5025221 overdue by 14 days", severity: "MEDIUM", timestamp: t(24 * 3600000) },
+  { id: "l8", type: "WEB", source: "Business Website", event: "SSL certificate expires in 12 days", severity: "MEDIUM", timestamp: t(24 * 3600000) },
 ];
 
 export const mockStats = {
@@ -144,7 +148,7 @@ export const mockStats = {
   employeeTrainingRate: 65,
   openVulnerabilities: 11,
   daysUntilAudit: 47,
-  lastScanTime: new Date(Date.now() - 2 * 24 * 3600000).toISOString(),
+  lastScanTime: t(2 * 24 * 3600000),
 };
 
 export const mockThreatTrend = [

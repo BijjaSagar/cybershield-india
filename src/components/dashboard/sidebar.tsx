@@ -92,9 +92,9 @@ export function Sidebar() {
 
       {/* Plan badge */}
       <div className="px-4 pb-4">
-        <div className="rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2">
-          <div className="text-xs text-blue-400 font-semibold">Suraksha Pro</div>
-          <div className="text-xs text-slate-500">Up to 50 employees</div>
+        <div className="rounded-lg bg-blue-600/10 border border-blue-500/20 px-3 py-2 overflow-hidden">
+          <div className="text-xs text-blue-400 font-semibold truncate">Suraksha Pro</div>
+          <div className="text-xs text-slate-500 truncate">Up to 50 employees</div>
         </div>
       </div>
     </aside>

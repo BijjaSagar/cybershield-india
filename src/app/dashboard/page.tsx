@@ -1,10 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import {
   Shield, Activity, AlertTriangle, FileText, Clock, TrendingUp,
@@ -81,13 +82,18 @@ function CertInMini() {
 }
 
 export default function DashboardPage() {
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleString("en-IN"));
+  }, []);
+
   const activeThreats = mockThreats.filter(t => t.status === "active" || t.status === "investigating");
 
   return (
     <div>
       <Topbar
         title="Security Overview"
-        subtitle={`Last updated: ${new Date().toLocaleString("en-IN")}`}
+        subtitle={lastUpdated ? `Last updated: ${lastUpdated}` : "Loading..."}
       />
 
       <div className="p-6 space-y-6">
