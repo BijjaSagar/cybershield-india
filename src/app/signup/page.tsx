@@ -109,8 +109,9 @@ export default function SignupPage() {
         // Registration worked but auto-login failed — send to login
         router.push("/login?registered=1");
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error. Check your connection.";
+      setError(msg);
     }
     setLoading(false);
   }
@@ -240,7 +241,10 @@ export default function SignupPage() {
           {step === 2 && (
             <>
               <h2 className="text-lg font-semibold text-white mb-2">Choose your plan</h2>
-              <p className="text-sm text-slate-400 mb-6">14-day free trial · Cancel anytime · No credit card needed</p>
+              <div className="flex items-center gap-2 mb-5 px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                <span className="text-lg">🎉</span>
+                <p className="text-sm text-emerald-300 font-medium">No payment needed — all plans include a full 14-day free trial. Pick your plan and get instant access.</p>
+              </div>
 
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-4">
@@ -295,7 +299,7 @@ export default function SignupPage() {
                 </button>
                 <button onClick={handleSignup} disabled={loading}
                   className="flex-[2] bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-all text-sm">
-                  {loading ? "Creating account..." : "Start Free Trial →"}
+                  {loading ? "Creating account..." : "Start 14-Day Free Trial — No Card Needed →"}
                 </button>
               </div>
             </>
