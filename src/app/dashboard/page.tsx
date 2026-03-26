@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import {
   Shield, Activity, AlertTriangle, FileText, Clock, TrendingUp,
-  CheckCircle2, XCircle, AlertCircle, ArrowUpRight, RefreshCw
+  CheckCircle2, AlertCircle, ArrowUpRight, RefreshCw
 } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
@@ -34,9 +34,13 @@ interface Threat {
   detectedAt: string;
 }
 
-function StatCard({
-  icon: Icon, label, value, sub, color = "blue", href,
-}: {
+interface TrendDay {
+  day: string;
+  threats: number;
+  blocked: number;
+}
+
+function StatCard({ icon: Icon, label, value, sub, color = "blue", href }: {
   icon: React.ElementType; label: string; value: string | number;
   sub?: string; color?: string; href?: string;
 }) {
@@ -48,7 +52,6 @@ function StatCard({
     purple: "bg-purple-500/10 text-purple-400 border-purple-500/20",
     orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   };
-
   const content = (
     <Card className="hover:border-slate-600/50 transition-all">
       <CardContent className="flex items-start gap-4">
@@ -64,49 +67,43 @@ function StatCard({
       </CardContent>
     </Card>
   );
-
   return href ? <Link href={href}>{content}</Link> : content;
 }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [threats, setThreats] = useState<Threat[]>([]);
+  const [trend, setTrend] = useState<TrendDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, threatsRes] = await Promise.all([
+      const [statsRes, threatsRes, trendRes] = await Promise.all([
         fetch("/api/dashboard/stats"),
         fetch("/api/threats?limit=5"),
+        fetch("/api/threats/trend"),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
       if (threatsRes.ok) {
-        const data = await threatsRes.json();
-        setThreats(data.threats ?? []);
+        const d = await threatsRes.json();
+        setThreats(d.threats ?? []);
+      }
+      if (trendRes.ok) {
+        const d = await trendRes.json();
+        setTrend(d.trend ?? []);
       }
     } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
+      console.error("Dashboard fetch error", err);
     }
     setLoading(false);
     setLastUpdated(new Date().toLocaleString("en-IN"));
-  }
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const activeThreats = threats.filter(t => t.status === "ACTIVE" || t.status === "INVESTIGATING");
-
-  // Build a simple 7-day threat trend from total count (real data)
-  const trend = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return {
-      day: d.toLocaleDateString("en-IN", { weekday: "short" }),
-      threats: 0,
-      blocked: 0,
-    };
-  });
 
   return (
     <div>
@@ -114,10 +111,9 @@ export default function DashboardPage() {
         title="Security Overview"
         subtitle={lastUpdated ? `Last updated: ${lastUpdated}` : "Loading..."}
       />
-
       <div className="p-6 space-y-6">
         {/* CERT-In Audit Banner */}
-        <div className="rounded-xl bg-blue-600/10 border border-blue-500/20 px-5 py-4 flex items-center justify-between">
+        <div className="rounded-xl bg-blue-600/10 border border-blue-500/20 px-5 py-4 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Shield className="w-5 h-5 text-blue-400" />
             <div>
@@ -131,10 +127,7 @@ export default function DashboardPage() {
               <div className="text-xs text-slate-400">Audit Ready</div>
             </div>
             <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all"
-                style={{ width: `${stats?.complianceScore ?? 0}%` }}
-              />
+              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${stats?.complianceScore ?? 0}%` }} />
             </div>
             <Link href="/dashboard/compliance" className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all">
               View Report
@@ -153,27 +146,28 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Threat Trend Chart — shows weekly trend */}
+          {/* Threat Trend Chart */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">Threat Activity — Last 7 Days</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button onClick={fetchData} className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1">
-                    <RefreshCw className="w-3 h-3" /> Refresh
+                    <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
                   </button>
-                  <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
-                    View all →
-                  </Link>
+                  <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">View all →</Link>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={trend} barGap={2}>
+                <BarChart data={trend.length > 0 ? trend : Array.from({ length: 7 }, (_, i) => {
+                  const d = new Date(); d.setDate(d.getDate() - (6 - i));
+                  return { day: d.toLocaleDateString("en-IN", { weekday: "short" }), threats: 0, blocked: 0 };
+                })} barGap={2}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }}
                     labelStyle={{ color: "#e2e8f0" }}
@@ -186,44 +180,40 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/80 inline-block" /> Detected</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/80 inline-block" /> Blocked</span>
               </div>
-              {stats?.threats === 0 && !loading && (
-                <div className="mt-3 text-xs text-slate-500 text-center">
-                  No threats detected yet — chart will populate as threats come in
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          {/* Live Stats mini */}
+          {/* Security Health */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">Security Health</h2>
-                <Link href="/dashboard/compliance" className="text-xs text-blue-400 hover:text-blue-300">
-                  Full report →
-                </Link>
+                <Link href="/dashboard/compliance" className="text-xs text-blue-400 hover:text-blue-300">Full report →</Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-3">
               {[
-                { label: "Active Threats", value: stats?.threats ?? 0, color: stats?.threats === 0 ? "text-emerald-400" : "text-red-400", icon: stats?.threats === 0 ? CheckCircle2 : XCircle },
-                { label: "Open Incidents", value: stats?.incidents ?? 0, color: stats?.incidents === 0 ? "text-emerald-400" : "text-orange-400", icon: stats?.incidents === 0 ? CheckCircle2 : AlertCircle },
-                { label: "Vulnerabilities", value: stats?.vulnerabilities ?? 0, color: stats?.vulnerabilities === 0 ? "text-emerald-400" : "text-yellow-400", icon: stats?.vulnerabilities === 0 ? CheckCircle2 : AlertCircle },
-                { label: "Compliance Score", value: `${stats?.complianceScore ?? 0}%`, color: (stats?.complianceScore ?? 0) >= 70 ? "text-emerald-400" : "text-red-400", icon: (stats?.complianceScore ?? 0) >= 70 ? CheckCircle2 : XCircle },
-                { label: "Training Completion", value: `${stats?.trainingScore ?? 0}%`, color: (stats?.trainingScore ?? 0) >= 70 ? "text-emerald-400" : "text-yellow-400", icon: (stats?.trainingScore ?? 0) >= 70 ? CheckCircle2 : AlertCircle },
-              ].map(({ label, value, color, icon: Icon }) => (
+                { label: "Active Threats", value: stats?.threats ?? 0, ok: (stats?.threats ?? 0) === 0 },
+                { label: "Open Incidents", value: stats?.incidents ?? 0, ok: (stats?.incidents ?? 0) === 0 },
+                { label: "Vulnerabilities", value: stats?.vulnerabilities ?? 0, ok: (stats?.vulnerabilities ?? 0) === 0 },
+                { label: "Compliance Score", value: `${stats?.complianceScore ?? 0}%`, ok: (stats?.complianceScore ?? 0) >= 70 },
+                { label: "Training Completion", value: `${stats?.trainingScore ?? 0}%`, ok: (stats?.trainingScore ?? 0) >= 70 },
+              ].map(({ label, value, ok }) => (
                 <div key={label} className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${color}`} />
+                  {ok
+                    ? <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    : <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />}
                   <span className="text-xs text-slate-400 flex-1">{label}</span>
-                  <span className={`text-sm font-semibold ${color}`}>{loading ? "—" : value}</span>
+                  <span className={`text-sm font-semibold ${ok ? "text-emerald-400" : "text-yellow-400"}`}>
+                    {loading ? "—" : value}
+                  </span>
                 </div>
               ))}
-
-              {stats?.threats === 0 && stats?.incidents === 0 && !loading && (
+              {(stats?.threats === 0 && stats?.incidents === 0 && !loading) && (
                 <div className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                   <div className="flex items-center gap-2 text-xs text-emerald-400">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    All systems secure — no active threats
+                    All systems secure
                   </div>
                 </div>
               )}
@@ -233,7 +223,6 @@ export default function DashboardPage() {
 
         {/* Active Threats + Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Active Threats */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -241,9 +230,7 @@ export default function DashboardPage() {
                   <span className="w-2 h-2 rounded-full bg-red-400 pulse-dot" />
                   Active Threats
                 </h2>
-                <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
-                  All threats →
-                </Link>
+                <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">All threats →</Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
@@ -256,13 +243,13 @@ export default function DashboardPage() {
                   <div className="text-xs text-slate-500 mt-1">Connect integrations to start monitoring</div>
                 </div>
               ) : (
-                activeThreats.map((t) => (
+                activeThreats.map(t => (
                   <div key={t.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
                     <SeverityBadge severity={t.severity as any} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-white truncate">{t.type}</div>
                       <div className="text-xs text-slate-400 truncate">{t.source}</div>
-                      {t.description && <div className="text-xs text-slate-400 mt-0.5">{t.description}</div>}
+                      {t.description && <div className="text-xs text-slate-400 mt-0.5 truncate">{t.description}</div>}
                     </div>
                     <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(t.detectedAt)}</span>
                   </div>
@@ -271,54 +258,24 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Quick Actions / Getting Started */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">Getting Started</h2>
-                <Link href="/dashboard/incidents" className="text-xs text-blue-400 hover:text-blue-300">
-                  Incidents →
-                </Link>
-              </div>
+              <h2 className="font-semibold text-white">Quick Actions</h2>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
               {[
-                {
-                  title: "Connect Google Workspace",
-                  desc: "Pull audit logs, login events, and admin activity automatically.",
-                  href: "/api/integrations/google/connect",
-                  action: "Connect →",
-                  color: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-                },
-                {
-                  title: "Connect Microsoft 365",
-                  desc: "Ingest sign-in logs, directory audits, and security alerts.",
-                  href: "/api/integrations/microsoft/connect",
-                  action: "Connect →",
-                  color: "bg-purple-500/10 border-purple-500/20 text-purple-400",
-                },
-                {
-                  title: "Create your first incident",
-                  desc: "Log a security incident and auto-generate CERT-In report.",
-                  href: "/dashboard/incidents",
-                  action: "Create →",
-                  color: "bg-orange-500/10 border-orange-500/20 text-orange-400",
-                },
-                {
-                  title: "Complete CERT-In controls",
-                  desc: "Improve your compliance score by filling in controls.",
-                  href: "/dashboard/compliance",
-                  action: "Review →",
-                  color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-                },
-              ].map((item) => (
+                { title: "Connect Google Workspace", desc: "Pull audit logs, login events automatically.", href: "/api/integrations/google/connect", color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
+                { title: "Connect Microsoft 365", desc: "Ingest sign-in logs and directory audits.", href: "/api/integrations/microsoft/connect", color: "bg-purple-500/10 border-purple-500/20 text-purple-400" },
+                { title: "Log a new incident", desc: "Create a CERT-In incident report in seconds.", href: "/dashboard/incidents", color: "bg-orange-500/10 border-orange-500/20 text-orange-400" },
+                { title: "Complete compliance controls", desc: "Improve your CERT-In audit readiness score.", href: "/dashboard/compliance", color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
+              ].map(item => (
                 <a key={item.title} href={item.href}
                   className={`flex items-center gap-3 p-3 rounded-lg border transition-all hover:opacity-80 ${item.color}`}>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-white">{item.title}</div>
                     <div className="text-xs text-slate-400 mt-0.5">{item.desc}</div>
                   </div>
-                  <span className="text-xs font-semibold flex-shrink-0">{item.action}</span>
+                  <ArrowUpRight className="w-4 h-4 flex-shrink-0" />
                 </a>
               ))}
             </CardContent>

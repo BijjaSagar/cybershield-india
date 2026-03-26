@@ -9,6 +9,17 @@ const PLAN_MAP: Record<string, "KAVACH" | "SURAKSHA" | "RAKSHAK"> = {
   rakshak: "RAKSHAK",
 };
 
+const DPDP_ITEMS = [
+  { id: "DPDP-01", name: "Data inventory mapping" },
+  { id: "DPDP-02", name: "Breach detection workflow" },
+  { id: "DPDP-03", name: "DPB 24-hour notification draft" },
+  { id: "DPDP-04", name: "Data principal notification template" },
+  { id: "DPDP-05", name: "Consent log active" },
+  { id: "DPDP-06", name: "Data deletion request tracker" },
+  { id: "DPDP-07", name: "Privacy policy DPDP-compliant" },
+  { id: "DPDP-08", name: "Data Protection Officer designated" },
+];
+
 const CERT_IN_CONTROLS = [
   { id: "CI-01", name: "Secure Configuration Management" },
   { id: "CI-02", name: "Network Access Control" },
@@ -96,6 +107,17 @@ export async function POST(req: NextRequest) {
       })),
       skipDuplicates: true,
     }).catch((e) => console.error("[register] compliance seed error:", e));
+
+    prisma.complianceItem.createMany({
+      data: DPDP_ITEMS.map((c) => ({
+        orgId: org.id,
+        framework: "DPDP",
+        controlId: c.id,
+        controlName: c.name,
+        status: "NOT_STARTED" as const,
+      })),
+      skipDuplicates: true,
+    }).catch((e) => console.error("[register] dpdp seed error:", e));
 
     return NextResponse.json({
       success: true,
