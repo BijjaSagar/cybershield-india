@@ -1,22 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/badge";
-import { mockIncidents } from "@/lib/mock-data";
 import { formatDate, timeAgo } from "@/lib/utils";
 import {
   AlertTriangle, Clock, CheckCircle2, Send, FileText, ChevronDown, ChevronUp, Server
 } from "lucide-react";
 
+interface Incident {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+  description?: string;
+  affectedSystems: string[];
+  certInReported: boolean;
+  certInDeadline?: string;
+  detectedAt: string;
+  resolvedAt?: string;
+}
+
 function CountdownTimer({ deadline }: { deadline: string }) {
   const ms = new Date(deadline).getTime() - Date.now();
   if (ms <= 0) return <span className="text-red-400 font-semibold text-xs">⚠ Deadline passed</span>;
-
   const hours = Math.floor(ms / 3600000);
   const mins = Math.floor((ms % 3600000) / 60000);
-
   return (
     <span className={`font-semibold text-xs ${hours < 2 ? "text-red-400" : "text-orange-400"}`}>
       ⏱ {hours}h {mins}m remaining
@@ -25,7 +35,55 @@ function CountdownTimer({ deadline }: { deadline: string }) {
 }
 
 export default function IncidentsPage() {
-  const [expanded, setExpanded] = useState<string | null>("inc-001");
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  async function fetchIncidents() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/incidents?limit=20");
+      if (res.ok) {
+        const data = await res.json();
+        setIncidents(data.incidents ?? []);
+        setTotal(data.total ?? 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch incidents", err);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchIncidents(); }, []);
+
+  async function markReported(id: string) {
+    setActionLoading(id);
+    await fetch(`/api/incidents/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ certInReported: true }),
+    });
+    await fetchIncidents();
+    setActionLoading(null);
+  }
+
+  async function updateStatus(id: string, status: string) {
+    setActionLoading(id);
+    await fetch(`/api/incidents/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    await fetchIncidents();
+    setActionLoading(null);
+  }
+
+  const openCount = incidents.filter(i => i.status === "OPEN" || i.status === "INVESTIGATING").length;
+  const filedCount = incidents.filter(i => i.certInReported).length;
+  const totalCount = incidents.length;
+  const onTimeRate = totalCount > 0 ? Math.round((filedCount / Math.max(filedCount + openCount, 1)) * 100) : 100;
 
   return (
     <div>
@@ -41,8 +99,9 @@ export default function IncidentsPage() {
             <div>
               <div className="text-white font-semibold text-sm">6-Hour CERT-In Reporting Requirement</div>
               <div className="text-slate-400 text-xs mt-1">
-                Under CERT-In directives, all organisations must report security incidents to CERT-In within <strong className="text-orange-400">6 hours</strong> of detection.
-                CyberShield auto-drafts the CERT-In report the moment an incident is detected — you just review and submit.
+                Under CERT-In directives, all organisations must report security incidents within{" "}
+                <strong className="text-orange-400">6 hours</strong> of detection.
+                CyberShield auto-drafts the report the moment an incident is detected.
               </div>
             </div>
           </div>
@@ -54,7 +113,7 @@ export default function IncidentsPage() {
             <CardContent className="flex items-center gap-3 py-4">
               <AlertTriangle className="w-8 h-8 text-red-400 bg-red-500/10 rounded-lg p-1.5" />
               <div>
-                <div className="text-xl font-bold text-white">1</div>
+                <div className="text-xl font-bold text-white">{loading ? "—" : openCount}</div>
                 <div className="text-xs text-slate-400">Pending Action</div>
               </div>
             </CardContent>
@@ -63,8 +122,8 @@ export default function IncidentsPage() {
             <CardContent className="flex items-center gap-3 py-4">
               <CheckCircle2 className="w-8 h-8 text-emerald-400 bg-emerald-500/10 rounded-lg p-1.5" />
               <div>
-                <div className="text-xl font-bold text-white">2</div>
-                <div className="text-xs text-slate-400">Reports Filed (this month)</div>
+                <div className="text-xl font-bold text-white">{loading ? "—" : filedCount}</div>
+                <div className="text-xs text-slate-400">Reports Filed</div>
               </div>
             </CardContent>
           </Card>
@@ -72,7 +131,7 @@ export default function IncidentsPage() {
             <CardContent className="flex items-center gap-3 py-4">
               <Clock className="w-8 h-8 text-blue-400 bg-blue-500/10 rounded-lg p-1.5" />
               <div>
-                <div className="text-xl font-bold text-white">100%</div>
+                <div className="text-xl font-bold text-white">{loading ? "—" : `${onTimeRate}%`}</div>
                 <div className="text-xs text-slate-400">On-time Filing Rate</div>
               </div>
             </CardContent>
@@ -80,127 +139,154 @@ export default function IncidentsPage() {
         </div>
 
         {/* Incident list */}
-        <div className="space-y-4">
-          {mockIncidents.map((inc) => (
-            <Card key={inc.id} className={inc.status === "draft_ready" ? "border-orange-500/30" : ""}>
-              <button
-                className="w-full px-5 py-4 flex items-start gap-4 text-left hover:bg-slate-700/10 transition-all"
-                onClick={() => setExpanded(expanded === inc.id ? null : inc.id)}
-              >
-                <div className="flex-shrink-0 pt-0.5">
-                  <SeverityBadge severity={inc.severity} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-semibold text-white text-sm">{inc.title}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                      inc.status === "draft_ready" ? "bg-orange-500/20 text-orange-400" :
-                      inc.status === "filed" ? "bg-blue-500/20 text-blue-400" :
-                      inc.status === "closed" ? "bg-emerald-500/20 text-emerald-400" :
-                      "bg-yellow-500/20 text-yellow-400"
-                    }`}>
-                      {inc.status === "draft_ready" ? "🟠 Report Ready — Action Required" :
-                       inc.status === "filed" ? "✓ Filed with CERT-In" :
-                       inc.status === "closed" ? "✓ Closed" : "Detected"}
-                    </span>
+        {loading ? (
+          <div className="text-center py-12 text-slate-500 text-sm">Loading incidents...</div>
+        ) : incidents.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-16 text-slate-400">
+              <CheckCircle2 className="w-12 h-12 text-emerald-500/30 mx-auto mb-3" />
+              <div className="text-sm font-medium">No incidents recorded</div>
+              <div className="text-xs text-slate-500 mt-1">Incidents will appear here as they are detected or created</div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {incidents.map((inc) => (
+              <Card key={inc.id} className={inc.status === "OPEN" && !inc.certInReported ? "border-orange-500/30" : ""}>
+                <button
+                  className="w-full px-5 py-4 flex items-start gap-4 text-left hover:bg-slate-700/10 transition-all"
+                  onClick={() => setExpanded(expanded === inc.id ? null : inc.id)}
+                >
+                  <div className="flex-shrink-0 pt-0.5">
+                    <SeverityBadge severity={inc.severity as any} />
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span>Category: {inc.certInCategory}</span>
-                    <span>Detected {timeAgo(inc.detectedAt)}</span>
-                    {inc.status === "draft_ready" && <CountdownTimer deadline={inc.deadline} />}
-                    {inc.status !== "draft_ready" && inc.reportFiled && (
-                      <span className="text-emerald-400">✓ Filed on time</span>
-                    )}
-                  </div>
-                </div>
-                {expanded === inc.id ? (
-                  <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                )}
-              </button>
-
-              {expanded === inc.id && (
-                <div className="px-5 pb-5 border-t border-slate-700/30 pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <div className="text-xs text-slate-500 mb-1">Description</div>
-                      <p className="text-sm text-slate-300">{inc.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-semibold text-white text-sm">{inc.title}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        inc.status === "OPEN" ? "bg-orange-500/20 text-orange-400" :
+                        inc.status === "INVESTIGATING" ? "bg-yellow-500/20 text-yellow-400" :
+                        inc.status === "RESOLVED" || inc.status === "CLOSED" ? "bg-emerald-500/20 text-emerald-400" :
+                        "bg-blue-500/20 text-blue-400"
+                      }`}>
+                        {inc.status === "OPEN" && !inc.certInReported ? "🟠 Action Required" :
+                         inc.certInReported ? "✓ Filed with CERT-In" :
+                         inc.status.charAt(0) + inc.status.slice(1).toLowerCase()}
+                      </span>
                     </div>
-                    <div>
-                      <div className="text-xs text-slate-500 mb-2">Affected Systems</div>
-                      {inc.affectedSystems.map((sys) => (
-                        <div key={sys} className="flex items-center gap-2 mb-1">
-                          <Server className="w-3 h-3 text-slate-500" />
-                          <span className="text-xs text-slate-400 font-mono">{sys}</span>
-                        </div>
-                      ))}
+                    <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                      <span>Detected {timeAgo(inc.detectedAt)}</span>
+                      {inc.status === "OPEN" && inc.certInDeadline && !inc.certInReported && (
+                        <CountdownTimer deadline={inc.certInDeadline} />
+                      )}
+                      {inc.certInReported && <span className="text-emerald-400">✓ Filed on time</span>}
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-xs mb-4">
-                    <div className="bg-slate-800/50 rounded-lg p-3">
-                      <div className="text-slate-500 mb-0.5">Detected at</div>
-                      <div className="text-slate-300">{formatDate(inc.detectedAt)}</div>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-lg p-3">
-                      <div className="text-slate-500 mb-0.5">CERT-In Deadline</div>
-                      <div className={new Date(inc.deadline) > new Date() ? "text-orange-400" : "text-emerald-400"}>
-                        {formatDate(inc.deadline)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CERT-In report preview */}
-                  {inc.status === "draft_ready" && (
-                    <div className="rounded-lg bg-slate-900/60 border border-slate-700/50 p-4 mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FileText className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm font-semibold text-white">CERT-In Report — Auto-Drafted</span>
-                        <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Ready to Submit</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        {[
-                          ["Incident Category", inc.certInCategory],
-                          ["Organisation Name", "Your Company Pvt Ltd"],
-                          ["Nodal Officer", "Akash Sharma (registered)"],
-                          ["First Detected", formatDate(inc.detectedAt)],
-                          ["Systems Affected", inc.affectedSystems.length.toString()],
-                          ["Data Breach", inc.severity === "CRITICAL" ? "Possible — under investigation" : "No"],
-                        ].map(([k, v]) => (
-                          <div key={k} className="flex gap-2">
-                            <span className="text-slate-500 flex-shrink-0">{k}:</span>
-                            <span className="text-slate-300">{v}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  {expanded === inc.id ? (
+                    <ChevronUp className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
                   )}
+                </button>
 
-                  {/* Action buttons */}
-                  <div className="flex gap-2 flex-wrap">
-                    {inc.status === "draft_ready" && (
-                      <>
-                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all">
-                          <Send className="w-4 h-4" />
-                          Submit to CERT-In Portal
-                        </button>
-                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/60 text-slate-300 text-sm border border-slate-600/50 hover:bg-slate-700 transition-all">
-                          <FileText className="w-4 h-4" />
-                          Edit Report
-                        </button>
-                      </>
+                {expanded === inc.id && (
+                  <div className="px-5 pb-5 border-t border-slate-700/30 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {inc.description && (
+                        <div>
+                          <div className="text-xs text-slate-500 mb-1">Description</div>
+                          <p className="text-sm text-slate-300">{inc.description}</p>
+                        </div>
+                      )}
+                      {inc.affectedSystems.length > 0 && (
+                        <div>
+                          <div className="text-xs text-slate-500 mb-2">Affected Systems</div>
+                          {inc.affectedSystems.map((sys) => (
+                            <div key={sys} className="flex items-center gap-2 mb-1">
+                              <Server className="w-3 h-3 text-slate-500" />
+                              <span className="text-xs text-slate-400 font-mono">{sys}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                      <div className="bg-slate-800/50 rounded-lg p-3">
+                        <div className="text-slate-500 mb-0.5">Detected at</div>
+                        <div className="text-slate-300">{formatDate(inc.detectedAt)}</div>
+                      </div>
+                      {inc.certInDeadline && (
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <div className="text-slate-500 mb-0.5">CERT-In Deadline</div>
+                          <div className={inc.certInReported ? "text-emerald-400" : "text-orange-400"}>
+                            {formatDate(inc.certInDeadline)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CERT-In report preview */}
+                    {!inc.certInReported && (inc.status === "OPEN" || inc.status === "INVESTIGATING") && (
+                      <div className="rounded-lg bg-slate-900/60 border border-slate-700/50 p-4 mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm font-semibold text-white">CERT-In Report — Auto-Drafted</span>
+                          <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Ready to Submit</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {[
+                            ["Incident Title", inc.title],
+                            ["Severity", inc.severity],
+                            ["Status", inc.status],
+                            ["First Detected", formatDate(inc.detectedAt)],
+                            ["Systems Affected", inc.affectedSystems.length.toString() || "Under investigation"],
+                            ["Data Breach", inc.severity === "CRITICAL" ? "Possible — under investigation" : "No"],
+                          ].map(([k, v]) => (
+                            <div key={k} className="flex gap-2">
+                              <span className="text-slate-500 flex-shrink-0">{k}:</span>
+                              <span className="text-slate-300">{v}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/60 text-slate-300 text-sm border border-slate-600/50 hover:bg-slate-700 transition-all">
-                      <FileText className="w-4 h-4" />
-                      Download PDF
-                    </button>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 flex-wrap">
+                      {!inc.certInReported && (inc.status === "OPEN" || inc.status === "INVESTIGATING") && (
+                        <>
+                          <button
+                            onClick={() => markReported(inc.id)}
+                            disabled={actionLoading === inc.id}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all disabled:opacity-50"
+                          >
+                            <Send className="w-4 h-4" />
+                            Mark as Filed with CERT-In
+                          </button>
+                        </>
+                      )}
+                      {inc.status !== "RESOLVED" && inc.status !== "CLOSED" && (
+                        <button
+                          onClick={() => updateStatus(inc.id, "RESOLVED")}
+                          disabled={actionLoading === inc.id}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600/20 text-emerald-400 text-sm border border-emerald-500/20 hover:bg-emerald-600/30 transition-all disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          Mark Resolved
+                        </button>
+                      )}
+                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/60 text-slate-300 text-sm border border-slate-600/50 hover:bg-slate-700 transition-all">
+                        <FileText className="w-4 h-4" />
+                        Download PDF
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

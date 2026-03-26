@@ -98,6 +98,7 @@ model Organization {
   trainings          TrainingProgress[]
   complianceItems    ComplianceItem[]
   payments           Payment[]
+  integrations       Integration[]
 }
 
 enum Plan {
@@ -303,4 +304,29 @@ enum PaymentStatus {
   CAPTURED
   FAILED
   REFUNDED
+}
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+model Integration {
+  id               String   @id @default(cuid())
+  orgId            String
+  provider         String
+  status           String   @default("active")
+  accessToken      String?  @db.Text
+  refreshToken     String?  @db.Text
+  tokenExpiresAt   DateTime?
+  tenantId         String?
+  adminEmail       String?
+  webhookSecret    String?
+  lastSyncAt       DateTime?
+  lastSyncError    String?  @db.Text
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, provider])
+  @@index([orgId])
 }

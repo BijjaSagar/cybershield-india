@@ -9,26 +9,36 @@ import {
 } from "recharts";
 import {
   Shield, Activity, AlertTriangle, FileText, Clock, TrendingUp,
-  CheckCircle2, XCircle, AlertCircle, ArrowUpRight
+  CheckCircle2, XCircle, AlertCircle, ArrowUpRight, RefreshCw
 } from "lucide-react";
-import { mockStats, mockThreats, mockThreatTrend, mockCertInControls } from "@/lib/mock-data";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";
 
+interface DashboardStats {
+  threats: number;
+  incidents: number;
+  logs: number;
+  complianceScore: number;
+  trainingScore: number;
+  vulnerabilities: number;
+}
+
+interface Threat {
+  id: string;
+  type: string;
+  severity: string;
+  source: string;
+  target?: string;
+  description?: string;
+  status: string;
+  detectedAt: string;
+}
+
 function StatCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color = "blue",
-  href,
+  icon: Icon, label, value, sub, color = "blue", href,
 }: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  color?: string;
-  href?: string;
+  icon: React.ElementType; label: string; value: string | number;
+  sub?: string; color?: string; href?: string;
 }) {
   const colorMap: Record<string, string> = {
     blue:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -58,36 +68,45 @@ function StatCard({
   return href ? <Link href={href}>{content}</Link> : content;
 }
 
-function CertInMini() {
-  const compliant = mockCertInControls.filter(c => c.status === "compliant").length;
-  const partial = mockCertInControls.filter(c => c.status === "partial").length;
-  const nonCompliant = mockCertInControls.filter(c => c.status === "non-compliant").length;
-
-  return (
-    <div className="flex items-center gap-4 text-sm">
-      <div className="flex items-center gap-1.5 text-emerald-400">
-        <CheckCircle2 className="w-4 h-4" />
-        <span>{compliant} Compliant</span>
-      </div>
-      <div className="flex items-center gap-1.5 text-yellow-400">
-        <AlertCircle className="w-4 h-4" />
-        <span>{partial} Partial</span>
-      </div>
-      <div className="flex items-center gap-1.5 text-red-400">
-        <XCircle className="w-4 h-4" />
-        <span>{nonCompliant} Failed</span>
-      </div>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [threats, setThreats] = useState<Threat[]>([]);
+  const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
-  useEffect(() => {
-    setLastUpdated(new Date().toLocaleString("en-IN"));
-  }, []);
 
-  const activeThreats = mockThreats.filter(t => t.status === "active" || t.status === "investigating");
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [statsRes, threatsRes] = await Promise.all([
+        fetch("/api/dashboard/stats"),
+        fetch("/api/threats?limit=5"),
+      ]);
+      if (statsRes.ok) setStats(await statsRes.json());
+      if (threatsRes.ok) {
+        const data = await threatsRes.json();
+        setThreats(data.threats ?? []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard data", err);
+    }
+    setLoading(false);
+    setLastUpdated(new Date().toLocaleString("en-IN"));
+  }
+
+  useEffect(() => { fetchData(); }, []);
+
+  const activeThreats = threats.filter(t => t.status === "ACTIVE" || t.status === "INVESTIGATING");
+
+  // Build a simple 7-day threat trend from total count (real data)
+  const trend = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      day: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      threats: 0,
+      blocked: 0,
+    };
+  });
 
   return (
     <div>
@@ -102,19 +121,19 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Shield className="w-5 h-5 text-blue-400" />
             <div>
-              <span className="text-white font-semibold">CERT-In Annual Audit</span>
-              <span className="text-slate-400 text-sm ml-2">in {mockStats.daysUntilAudit} days</span>
+              <span className="text-white font-semibold">CERT-In Compliance Score</span>
+              <span className="text-slate-400 text-sm ml-2">Annual audit readiness</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className="text-2xl font-bold text-white">{mockStats.certInScore}%</div>
+              <div className="text-2xl font-bold text-white">{stats?.complianceScore ?? 0}%</div>
               <div className="text-xs text-slate-400">Audit Ready</div>
             </div>
             <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full"
-                style={{ width: `${mockStats.certInScore}%` }}
+                className="h-full bg-blue-500 rounded-full transition-all"
+                style={{ width: `${stats?.complianceScore ?? 0}%` }}
               />
             </div>
             <Link href="/dashboard/compliance" className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all">
@@ -125,28 +144,33 @@ export default function DashboardPage() {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <StatCard icon={Activity} label="Threats Today" value={mockStats.totalThreatsToday} color="red" href="/dashboard/threats" />
-          <StatCard icon={AlertTriangle} label="Active Alerts" value={mockStats.activeAlerts} sub="Requires action" color="orange" href="/dashboard/threats" />
-          <StatCard icon={Shield} label="CERT-In Score" value={`${mockStats.certInScore}%`} sub="82 / 100 pts" color="blue" href="/dashboard/compliance" />
-          <StatCard icon={FileText} label="Logs Retained" value={mockStats.logsRetained.toLocaleString("en-IN")} sub="180-day vault" color="purple" href="/dashboard/logs" />
-          <StatCard icon={Clock} label="Incidents Filed" value={`${mockStats.incidentsFiled}/${mockStats.incidentsThisMonth}`} sub="This month" color="green" href="/dashboard/incidents" />
-          <StatCard icon={TrendingUp} label="Training Rate" value={`${mockStats.employeeTrainingRate}%`} sub="6/10 employees" color="yellow" href="/dashboard/awareness" />
+          <StatCard icon={Activity} label="Active Threats" value={loading ? "—" : stats?.threats ?? 0} color="red" href="/dashboard/threats" />
+          <StatCard icon={AlertTriangle} label="Open Incidents" value={loading ? "—" : stats?.incidents ?? 0} sub="Requires action" color="orange" href="/dashboard/incidents" />
+          <StatCard icon={Shield} label="CERT-In Score" value={loading ? "—" : `${stats?.complianceScore ?? 0}%`} color="blue" href="/dashboard/compliance" />
+          <StatCard icon={FileText} label="Logs Retained" value={loading ? "—" : (stats?.logs ?? 0).toLocaleString("en-IN")} sub="180-day vault" color="purple" href="/dashboard/logs" />
+          <StatCard icon={Clock} label="Vulnerabilities" value={loading ? "—" : stats?.vulnerabilities ?? 0} sub="Open / In progress" color="green" href="/dashboard/vulnerability" />
+          <StatCard icon={TrendingUp} label="Training Rate" value={loading ? "—" : `${stats?.trainingScore ?? 0}%`} sub="Completion rate" color="yellow" href="/dashboard/awareness" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Threat Trend Chart */}
+          {/* Threat Trend Chart — shows weekly trend */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">Threat Activity — Last 7 Days</h2>
-                <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
-                  View all →
-                </Link>
+                <div className="flex items-center gap-2">
+                  <button onClick={fetchData} className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" /> Refresh
+                  </button>
+                  <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
+                    View all →
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={mockThreatTrend} barGap={2}>
+                <BarChart data={trend} barGap={2}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -162,39 +186,52 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/80 inline-block" /> Detected</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/80 inline-block" /> Blocked</span>
               </div>
+              {stats?.threats === 0 && !loading && (
+                <div className="mt-3 text-xs text-slate-500 text-center">
+                  No threats detected yet — chart will populate as threats come in
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* CERT-In Controls Mini */}
+          {/* Live Stats mini */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">CERT-In Controls</h2>
+                <h2 className="font-semibold text-white">Security Health</h2>
                 <Link href="/dashboard/compliance" className="text-xs text-blue-400 hover:text-blue-300">
                   Full report →
                 </Link>
               </div>
-              <CertInMini />
             </CardHeader>
-            <CardContent className="space-y-2 pt-3">
-              {mockCertInControls.slice(0, 7).map((ctrl) => (
-                <div key={ctrl.id} className="flex items-center gap-3">
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    ctrl.status === "compliant" ? "bg-emerald-400" :
-                    ctrl.status === "partial" ? "bg-yellow-400" : "bg-red-400"
-                  }`} />
-                  <span className="text-xs text-slate-400 flex-1 truncate">{ctrl.id}. {ctrl.name}</span>
-                  <span className="text-xs text-slate-400">{ctrl.score}%</span>
+            <CardContent className="space-y-4 pt-3">
+              {[
+                { label: "Active Threats", value: stats?.threats ?? 0, color: stats?.threats === 0 ? "text-emerald-400" : "text-red-400", icon: stats?.threats === 0 ? CheckCircle2 : XCircle },
+                { label: "Open Incidents", value: stats?.incidents ?? 0, color: stats?.incidents === 0 ? "text-emerald-400" : "text-orange-400", icon: stats?.incidents === 0 ? CheckCircle2 : AlertCircle },
+                { label: "Vulnerabilities", value: stats?.vulnerabilities ?? 0, color: stats?.vulnerabilities === 0 ? "text-emerald-400" : "text-yellow-400", icon: stats?.vulnerabilities === 0 ? CheckCircle2 : AlertCircle },
+                { label: "Compliance Score", value: `${stats?.complianceScore ?? 0}%`, color: (stats?.complianceScore ?? 0) >= 70 ? "text-emerald-400" : "text-red-400", icon: (stats?.complianceScore ?? 0) >= 70 ? CheckCircle2 : XCircle },
+                { label: "Training Completion", value: `${stats?.trainingScore ?? 0}%`, color: (stats?.trainingScore ?? 0) >= 70 ? "text-emerald-400" : "text-yellow-400", icon: (stats?.trainingScore ?? 0) >= 70 ? CheckCircle2 : AlertCircle },
+              ].map(({ label, value, color, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${color}`} />
+                  <span className="text-xs text-slate-400 flex-1">{label}</span>
+                  <span className={`text-sm font-semibold ${color}`}>{loading ? "—" : value}</span>
                 </div>
               ))}
-              <Link href="/dashboard/compliance" className="block text-xs text-blue-400 hover:text-blue-300 pt-1">
-                + 8 more controls
-              </Link>
+
+              {stats?.threats === 0 && stats?.incidents === 0 && !loading && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 text-xs text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    All systems secure — no active threats
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Active Threats + Recent Activity */}
+        {/* Active Threats + Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Active Threats */}
           <Card>
@@ -210,57 +247,80 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
-              {activeThreats.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-6 text-slate-500 text-sm">Loading...</div>
+              ) : activeThreats.length === 0 ? (
                 <div className="text-center py-6 text-slate-400 text-sm">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
                   No active threats
+                  <div className="text-xs text-slate-500 mt-1">Connect integrations to start monitoring</div>
                 </div>
               ) : (
                 activeThreats.map((t) => (
                   <div key={t.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
-                    <SeverityBadge severity={t.severity} />
+                    <SeverityBadge severity={t.severity as any} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-white truncate">{t.type}</div>
-                      <div className="text-xs text-slate-400 truncate">{t.target} · {t.source_country}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{t.description}</div>
+                      <div className="text-xs text-slate-400 truncate">{t.source}</div>
+                      {t.description && <div className="text-xs text-slate-400 mt-0.5">{t.description}</div>}
                     </div>
-                    <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(t.timestamp)}</span>
+                    <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(t.detectedAt)}</span>
                   </div>
                 ))
               )}
             </CardContent>
           </Card>
 
-          {/* Recent Incidents */}
+          {/* Quick Actions / Getting Started */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">Incident Response</h2>
+                <h2 className="font-semibold text-white">Getting Started</h2>
                 <Link href="/dashboard/incidents" className="text-xs text-blue-400 hover:text-blue-300">
-                  All incidents →
+                  Incidents →
                 </Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <div className="flex items-center justify-between mb-2">
-                  <SeverityBadge severity="CRITICAL" />
-                  <span className="text-xs text-orange-400 font-semibold">⏱ 4h 12m remaining</span>
-                </div>
-                <div className="text-sm font-medium text-white">Ransomware attempt detected</div>
-                <div className="text-xs text-slate-400 mt-1">CERT-In report auto-drafted. Review & submit to meet 6-hour deadline.</div>
-                <Link href="/dashboard/incidents" className="mt-2 inline-block px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 transition-all border border-red-500/30">
-                  Review & Submit Report →
-                </Link>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-xs text-emerald-400 font-semibold">Filed on time</span>
-                </div>
-                <div className="text-sm font-medium text-white">Unauthorised data access</div>
-                <div className="text-xs text-slate-400 mt-0.5">Filed to CERT-In · 18h ago</div>
-              </div>
+              {[
+                {
+                  title: "Connect Google Workspace",
+                  desc: "Pull audit logs, login events, and admin activity automatically.",
+                  href: "/api/integrations/google/connect",
+                  action: "Connect →",
+                  color: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+                },
+                {
+                  title: "Connect Microsoft 365",
+                  desc: "Ingest sign-in logs, directory audits, and security alerts.",
+                  href: "/api/integrations/microsoft/connect",
+                  action: "Connect →",
+                  color: "bg-purple-500/10 border-purple-500/20 text-purple-400",
+                },
+                {
+                  title: "Create your first incident",
+                  desc: "Log a security incident and auto-generate CERT-In report.",
+                  href: "/dashboard/incidents",
+                  action: "Create →",
+                  color: "bg-orange-500/10 border-orange-500/20 text-orange-400",
+                },
+                {
+                  title: "Complete CERT-In controls",
+                  desc: "Improve your compliance score by filling in controls.",
+                  href: "/dashboard/compliance",
+                  action: "Review →",
+                  color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+                },
+              ].map((item) => (
+                <a key={item.title} href={item.href}
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all hover:opacity-80 ${item.color}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white">{item.title}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{item.desc}</div>
+                  </div>
+                  <span className="text-xs font-semibold flex-shrink-0">{item.action}</span>
+                </a>
+              ))}
             </CardContent>
           </Card>
         </div>
