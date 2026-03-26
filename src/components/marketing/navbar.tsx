@@ -14,7 +14,7 @@ const navLinks = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0f1e]/90 backdrop-blur-md border-b border-slate-700/40">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
@@ -22,15 +22,15 @@ export function Navbar() {
             <Shield className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className="font-bold text-white text-sm">CyberShield</span>
-            <span className="text-blue-400 text-sm font-bold"> India</span>
+            <span className="font-bold text-slate-800 text-sm">CyberShield</span>
+            <span className="text-blue-600 text-sm font-bold"> India</span>
           </div>
         </Link>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map(l => (
-            <a key={l.label} href={l.href} className="text-sm text-slate-400 hover:text-white transition-colors">
+            <a key={l.label} href={l.href} className="text-sm text-slate-600 hover:text-blue-600 transition-colors">
               {l.label}
             </a>
           ))}
@@ -38,32 +38,32 @@ export function Navbar() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
+          <Link href="/login" className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors">
             Sign In
           </Link>
-          <Link href="/signup" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all">
+          <Link href="/signup" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-sm">
             Start Free Trial
           </Link>
         </div>
 
         {/* Mobile burger */}
-        <button className="md:hidden text-slate-400" onClick={() => setOpen(!open)}>
+        <button className="md:hidden text-slate-600" onClick={() => setOpen(!open)}>
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-[#0d1424] border-t border-slate-700/40 px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white border-t border-slate-200 px-4 py-4 space-y-3 shadow-md">
           {navLinks.map(l => (
             <a key={l.label} href={l.href} onClick={() => setOpen(false)}
-              className="block text-sm text-slate-300 hover:text-white py-1">
+              className="block text-sm text-slate-700 hover:text-blue-600 py-1">
               {l.label}
             </a>
           ))}
           <div className="pt-2 flex flex-col gap-2">
-            <Link href="/login" className="text-center py-2 rounded-lg border border-slate-600 text-slate-300 text-sm">Sign In</Link>
-            <Link href="/signup" className="text-center py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold">Start Free Trial</Link>
+            <Link href="/login" className="text-center py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:border-blue-400 transition-colors">Sign In</Link>
+            <Link href="/signup" className="text-center py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Start Free Trial</Link>
           </div>
         </div>
       )}

@@ -1,31 +1,32 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
-function getConnectionString() {
+// Lazy singleton — never throws at module load time (build-safe)
+let _prisma: PrismaClient | undefined;
+
+function createClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL environment variable is not set.");
 
-  // Remove channel_binding parameter — not supported by @neondatabase/serverless adapter
+  // Strip channel_binding — not supported by @neondatabase/serverless
+  let connectionString = url;
   try {
     const parsed = new URL(url);
     parsed.searchParams.delete("channel_binding");
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
+    connectionString = parsed.toString();
+  } catch { /* keep original */ }
 
-function createPrismaClient() {
-  const connectionString = getConnectionString();
   const adapter = new PrismaNeon({ connectionString });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new PrismaClient({ adapter } as any);
 }
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Proxy: creation is deferred until first actual DB call (not at import time)
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_, prop: string | symbol) {
+    if (!_prisma) _prisma = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const val = (_prisma as any)[prop];
+    return typeof val === "function" ? val.bind(_prisma) : val;
+  },
+});

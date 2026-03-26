@@ -2,16 +2,16 @@ import { cn } from "@/lib/utils";
 import { type Severity, type ComplianceStatus } from "@/types";
 
 const severityConfig: Record<Severity, string> = {
-  CRITICAL: "bg-red-500/20 text-red-400 border border-red-500/30",
-  HIGH: "bg-orange-500/20 text-orange-400 border border-orange-500/30",
-  MEDIUM: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
-  LOW: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+  CRITICAL: "bg-red-100 text-red-700 border border-red-300",
+  HIGH: "bg-orange-100 text-orange-700 border border-orange-300",
+  MEDIUM: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  LOW: "bg-blue-100 text-blue-700 border border-blue-300",
 };
 
 const complianceConfig: Record<ComplianceStatus, string> = {
-  compliant: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
-  partial: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
-  "non-compliant": "bg-red-500/20 text-red-400 border border-red-500/30",
+  compliant: "bg-emerald-100 text-emerald-700 border border-emerald-300",
+  partial: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  "non-compliant": "bg-red-100 text-red-700 border border-red-300",
 };
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
@@ -33,6 +33,6 @@ export function ComplianceBadge({ status }: { status: ComplianceStatus }) {
 
 export function StatusDot({ active }: { active: boolean }) {
   return (
-    <span className={cn("inline-block w-2 h-2 rounded-full", active ? "bg-emerald-400 pulse-dot" : "bg-slate-500")} />
+    <span className={cn("inline-block w-2 h-2 rounded-full", active ? "bg-emerald-500 pulse-dot" : "bg-slate-300")} />
   );
 }

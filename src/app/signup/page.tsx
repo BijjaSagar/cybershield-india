@@ -120,42 +120,42 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0f1e] px-4 py-12">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
 
       <div className="w-full max-w-lg relative">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 mb-4">
-            <Shield className="w-8 h-8 text-blue-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 mb-4">
+            <Shield className="w-8 h-8 text-blue-600" />
           </div>
-          <h1 className="text-2xl font-bold text-white">CyberShield India</h1>
-          <p className="text-slate-400 text-sm mt-1">Start your free 14-day trial — no credit card required</p>
+          <h1 className="text-2xl font-bold text-slate-900">CyberShield India</h1>
+          <p className="text-slate-500 text-sm mt-1">Start your free 14-day trial — no credit card required</p>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className={`flex items-center gap-2 text-sm font-medium ${step >= 1 ? "text-blue-400" : "text-slate-500"}`}>
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${step > 1 ? "bg-blue-600 border-blue-600 text-white" : step === 1 ? "border-blue-500 text-blue-400" : "border-slate-600 text-slate-500"}`}>
+          <div className={`flex items-center gap-2 text-sm font-medium ${step >= 1 ? "text-blue-600" : "text-slate-500"}`}>
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${step > 1 ? "bg-blue-600 border-blue-600 text-white" : step === 1 ? "border-blue-500 text-blue-600" : "border-slate-300 text-slate-500"}`}>
               {step > 1 ? <CheckCircle2 className="w-4 h-4" /> : "1"}
             </span>
             Account Details
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-600" />
-          <div className={`flex items-center gap-2 text-sm font-medium ${step >= 2 ? "text-blue-400" : "text-slate-500"}`}>
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${step === 2 ? "border-blue-500 text-blue-400" : "border-slate-600 text-slate-500"}`}>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+          <div className={`flex items-center gap-2 text-sm font-medium ${step >= 2 ? "text-blue-600" : "text-slate-500"}`}>
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${step === 2 ? "border-blue-500 text-blue-600" : "border-slate-300 text-slate-400"}`}>
               2
             </span>
             Choose Plan
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-sm p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
 
           {/* STEP 1 */}
           {step === 1 && (
             <>
-              <h2 className="text-lg font-semibold text-white mb-6">Create your account</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-6">Create your account</h2>
 
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-4">
@@ -167,68 +167,68 @@ export default function SignupPage() {
               <form onSubmit={handleStep1} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-slate-400 mb-1.5">Full Name</label>
+                    <label className="block text-sm text-slate-600 mb-1.5 font-medium">Full Name</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input type="text" value={form.name} onChange={(e) => update("name", e.target.value)}
                         placeholder="Rahul Sharma" required
-                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                        className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-400 mb-1.5">Phone</label>
+                    <label className="block text-sm text-slate-600 mb-1.5 font-medium">Phone</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)}
                         placeholder="+91 98765 43210" required
-                        className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                        className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1.5">Company Name</label>
+                  <label className="block text-sm text-slate-600 mb-1.5 font-medium">Company Name</label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type="text" value={form.company} onChange={(e) => update("company", e.target.value)}
                       placeholder="Sharma Enterprises Pvt Ltd" required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1.5">Work Email</label>
+                  <label className="block text-sm text-slate-600 mb-1.5 font-medium">Work Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
                       placeholder="rahul@sharma-enterprises.com" required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1.5">Password</label>
+                  <label className="block text-sm text-slate-600 mb-1.5 font-medium">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type={showPass ? "text" : "password"} value={form.password}
                       onChange={(e) => update("password", e.target.value)}
                       placeholder="Min. 8 characters" required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-10 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                     <button type="button" onClick={() => setShowPass(!showPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1.5">Confirm Password</label>
+                  <label className="block text-sm text-slate-600 mb-1.5 font-medium">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type="password" value={form.confirmPassword}
                       onChange={(e) => update("confirmPassword", e.target.value)}
                       placeholder="Re-enter password" required
-                      className="w-full bg-slate-900/60 border border-slate-700/50 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors" />
+                      className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors" />
                   </div>
                 </div>
 
@@ -243,10 +243,10 @@ export default function SignupPage() {
           {/* STEP 2 */}
           {step === 2 && (
             <>
-              <h2 className="text-lg font-semibold text-white mb-2">Choose your plan</h2>
-              <div className="flex items-center gap-2 mb-5 px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+              <h2 className="text-lg font-semibold text-slate-900 mb-2">Choose your plan</h2>
+              <div className="flex items-center gap-2 mb-5 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
                 <span className="text-lg">🎉</span>
-                <p className="text-sm text-emerald-300 font-medium">No payment needed — all plans include a full 14-day free trial. Pick your plan and get instant access.</p>
+                <p className="text-sm text-emerald-700 font-medium">No payment needed — all plans include a full 14-day free trial. Pick your plan and get instant access.</p>
               </div>
 
               {error && (
@@ -261,35 +261,35 @@ export default function SignupPage() {
                   <button key={plan.id} onClick={() => setSelectedPlan(plan.id)}
                     className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
                       selectedPlan === plan.id
-                        ? `${plan.color} bg-blue-600/10`
-                        : "border-slate-700/50 bg-slate-900/40 hover:border-slate-600"
+                        ? `${plan.color} bg-blue-50`
+                        : "border-slate-200 bg-white hover:border-blue-300"
                     }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === plan.id ? "border-blue-400" : "border-slate-600"}`}>
-                          {selectedPlan === plan.id && <div className="w-2 h-2 rounded-full bg-blue-400" />}
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === plan.id ? "border-blue-500" : "border-slate-300"}`}>
+                          {selectedPlan === plan.id && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-white">{plan.name}</span>
+                            <span className="text-sm font-semibold text-slate-900">{plan.name}</span>
                             {plan.popular && (
-                              <span className="text-xs bg-blue-600/30 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full">Most Popular</span>
+                              <span className="text-xs bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">Most Popular</span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400 mt-0.5">{plan.employees}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{plan.employees}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-white">{plan.price}</div>
-                        <div className="text-xs text-emerald-400">14 days free</div>
+                        <div className="text-sm font-bold text-slate-900">{plan.price}</div>
+                        <div className="text-xs text-emerald-600">14 days free</div>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
 
-              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 mb-6">
-                <div className="flex items-start gap-2 text-xs text-emerald-300">
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 mb-6">
+                <div className="flex items-start gap-2 text-xs text-emerald-700">
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>All plans include: CERT-In compliance, threat monitoring, incident response, log vault, vulnerability scanner, and security training. All data stored in India 🇮🇳</span>
                 </div>
@@ -297,7 +297,7 @@ export default function SignupPage() {
 
               <div className="flex gap-3">
                 <button onClick={() => { setStep(1); setError(""); }}
-                  className="flex-1 border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-2.5 rounded-lg transition-all text-sm">
+                  className="flex-1 border border-slate-300 text-slate-600 hover:text-blue-600 hover:border-blue-400 font-medium py-2.5 rounded-lg transition-all text-sm">
                   Back
                 </button>
                 <button onClick={handleSignup} disabled={loading}
@@ -311,12 +311,12 @@ export default function SignupPage() {
 
         <p className="text-center text-sm text-slate-500 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">Sign in</Link>
+          <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">Sign in</Link>
         </p>
 
-        <div className="text-center mt-4 text-xs text-slate-600">
+        <div className="text-center mt-4 text-xs text-slate-400">
           <span>CERT-In Compliant · DPDP Act 2023 · </span>
-          <span className="text-blue-600">Data stored in India 🇮🇳</span>
+          <span className="text-blue-600 font-medium">Data stored in India 🇮🇳</span>
         </div>
       </div>
     </div>
