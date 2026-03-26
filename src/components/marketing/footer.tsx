@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Shield, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 
 export function Footer() {
   return (
@@ -9,10 +10,8 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-slate-800">CyberShield India</span>
+              <LogoMark size={30} />
+              <span className="font-bold text-slate-800 text-sm tracking-tight">CyberShield <span className="text-blue-600">India</span></span>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed mb-4">
               साइबर सुरक्षा · Affordable CERT-In compliant cybersecurity SaaS built for India's 63 million SMBs.

@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Shield, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -18,11 +19,9 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-slate-800 text-sm">CyberShield</span>
+          <LogoMark size={32} />
+          <div className="leading-tight">
+            <span className="font-bold text-slate-800 text-sm tracking-tight">CyberShield</span>
             <span className="text-blue-600 text-sm font-bold"> India</span>
           </div>
         </Link>

@@ -31,12 +31,12 @@ function StatCard({
   href?: string;
 }) {
   const colorMap: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    red: "bg-red-50 text-red-600 border-red-200",
-    green: "bg-emerald-50 text-emerald-600 border-emerald-200",
-    yellow: "bg-yellow-50 text-yellow-600 border-yellow-200",
-    purple: "bg-purple-50 text-purple-600 border-purple-200",
-    orange: "bg-orange-50 text-orange-600 border-orange-200",
+    blue:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    red:    "bg-red-500/10 text-red-400 border-red-500/20",
+    green:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    yellow: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    purple: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   };
 
   const content = (
@@ -46,8 +46,8 @@ function StatCard({
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <div className="text-2xl font-bold text-slate-900">{value}</div>
-          <div className="text-sm text-slate-500 truncate">{label}</div>
+          <div className="text-2xl font-bold text-white">{value}</div>
+          <div className="text-sm text-slate-400 truncate">{label}</div>
           {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
         </div>
         {href && <ArrowUpRight className="w-4 h-4 text-slate-400 ml-auto flex-shrink-0 mt-1" />}
@@ -65,15 +65,15 @@ function CertInMini() {
 
   return (
     <div className="flex items-center gap-4 text-sm">
-      <div className="flex items-center gap-1.5 text-emerald-600">
+      <div className="flex items-center gap-1.5 text-emerald-400">
         <CheckCircle2 className="w-4 h-4" />
         <span>{compliant} Compliant</span>
       </div>
-      <div className="flex items-center gap-1.5 text-yellow-600">
+      <div className="flex items-center gap-1.5 text-yellow-400">
         <AlertCircle className="w-4 h-4" />
         <span>{partial} Partial</span>
       </div>
-      <div className="flex items-center gap-1.5 text-red-600">
+      <div className="flex items-center gap-1.5 text-red-400">
         <XCircle className="w-4 h-4" />
         <span>{nonCompliant} Failed</span>
       </div>
@@ -98,20 +98,20 @@ export default function DashboardPage() {
 
       <div className="p-6 space-y-6">
         {/* CERT-In Audit Banner */}
-        <div className="rounded-xl bg-blue-50 border border-blue-200 px-5 py-4 flex items-center justify-between">
+        <div className="rounded-xl bg-blue-600/10 border border-blue-500/20 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-blue-600" />
+            <Shield className="w-5 h-5 text-blue-400" />
             <div>
-              <span className="text-slate-900 font-semibold">CERT-In Annual Audit</span>
-              <span className="text-slate-500 text-sm ml-2">in {mockStats.daysUntilAudit} days</span>
+              <span className="text-white font-semibold">CERT-In Annual Audit</span>
+              <span className="text-slate-400 text-sm ml-2">in {mockStats.daysUntilAudit} days</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className="text-2xl font-bold text-slate-900">{mockStats.certInScore}%</div>
-              <div className="text-xs text-slate-500">Audit Ready</div>
+              <div className="text-2xl font-bold text-white">{mockStats.certInScore}%</div>
+              <div className="text-xs text-slate-400">Audit Ready</div>
             </div>
-            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-blue-500 rounded-full"
                 style={{ width: `${mockStats.certInScore}%` }}
@@ -138,8 +138,8 @@ export default function DashboardPage() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900">Threat Activity — Last 7 Days</h2>
-                <Link href="/dashboard/threats" className="text-xs text-blue-600 hover:text-blue-700">
+                <h2 className="font-semibold text-white">Threat Activity — Last 7 Days</h2>
+                <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
                   View all →
                 </Link>
               </div>
@@ -147,18 +147,18 @@ export default function DashboardPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={mockThreatTrend} barGap={2}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#64748b", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                    labelStyle={{ color: "#0f172a" }}
+                    contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "#e2e8f0" }}
                   />
                   <Bar dataKey="threats" fill="#ef4444" opacity={0.8} radius={[3, 3, 0, 0]} name="Detected" />
                   <Bar dataKey="blocked" fill="#22c55e" opacity={0.8} radius={[3, 3, 0, 0]} name="Blocked" />
                 </BarChart>
               </ResponsiveContainer>
-              <div className="flex gap-4 mt-2 text-xs text-slate-500">
+              <div className="flex gap-4 mt-2 text-xs text-slate-400">
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/80 inline-block" /> Detected</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/80 inline-block" /> Blocked</span>
               </div>
@@ -169,8 +169,8 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900">CERT-In Controls</h2>
-                <Link href="/dashboard/compliance" className="text-xs text-blue-600 hover:text-blue-700">
+                <h2 className="font-semibold text-white">CERT-In Controls</h2>
+                <Link href="/dashboard/compliance" className="text-xs text-blue-400 hover:text-blue-300">
                   Full report →
                 </Link>
               </div>
@@ -183,11 +183,11 @@ export default function DashboardPage() {
                     ctrl.status === "compliant" ? "bg-emerald-400" :
                     ctrl.status === "partial" ? "bg-yellow-400" : "bg-red-400"
                   }`} />
-                  <span className="text-xs text-slate-600 flex-1 truncate">{ctrl.id}. {ctrl.name}</span>
-                  <span className="text-xs text-slate-500">{ctrl.score}%</span>
+                  <span className="text-xs text-slate-400 flex-1 truncate">{ctrl.id}. {ctrl.name}</span>
+                  <span className="text-xs text-slate-400">{ctrl.score}%</span>
                 </div>
               ))}
-              <Link href="/dashboard/compliance" className="block text-xs text-blue-600 hover:text-blue-700 pt-1">
+              <Link href="/dashboard/compliance" className="block text-xs text-blue-400 hover:text-blue-300 pt-1">
                 + 8 more controls
               </Link>
             </CardContent>
@@ -200,28 +200,28 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="font-semibold text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-red-400 pulse-dot" />
                   Active Threats
                 </h2>
-                <Link href="/dashboard/threats" className="text-xs text-blue-600 hover:text-blue-700">
+                <Link href="/dashboard/threats" className="text-xs text-blue-400 hover:text-blue-300">
                   All threats →
                 </Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
               {activeThreats.length === 0 ? (
-                <div className="text-center py-6 text-slate-500 text-sm">
+                <div className="text-center py-6 text-slate-400 text-sm">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
                   No active threats
                 </div>
               ) : (
                 activeThreats.map((t) => (
-                  <div key={t.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                  <div key={t.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
                     <SeverityBadge severity={t.severity} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 truncate">{t.type}</div>
-                      <div className="text-xs text-slate-500 truncate">{t.target} · {t.source_country}</div>
+                      <div className="text-sm font-medium text-white truncate">{t.type}</div>
+                      <div className="text-xs text-slate-400 truncate">{t.target} · {t.source_country}</div>
                       <div className="text-xs text-slate-400 mt-0.5">{t.description}</div>
                     </div>
                     <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(t.timestamp)}</span>
@@ -235,31 +235,31 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900">Incident Response</h2>
-                <Link href="/dashboard/incidents" className="text-xs text-blue-600 hover:text-blue-700">
+                <h2 className="font-semibold text-white">Incident Response</h2>
+                <Link href="/dashboard/incidents" className="text-xs text-blue-400 hover:text-blue-300">
                   All incidents →
                 </Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-3">
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <SeverityBadge severity="CRITICAL" />
-                  <span className="text-xs text-orange-600 font-semibold">⏱ 4h 12m remaining</span>
+                  <span className="text-xs text-orange-400 font-semibold">⏱ 4h 12m remaining</span>
                 </div>
-                <div className="text-sm font-medium text-slate-900">Ransomware attempt detected</div>
-                <div className="text-xs text-slate-500 mt-1">CERT-In report auto-drafted. Review & submit to meet 6-hour deadline.</div>
-                <Link href="/dashboard/incidents" className="mt-2 inline-block px-3 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-medium hover:bg-red-200 transition-all border border-red-200">
+                <div className="text-sm font-medium text-white">Ransomware attempt detected</div>
+                <div className="text-xs text-slate-400 mt-1">CERT-In report auto-drafted. Review & submit to meet 6-hour deadline.</div>
+                <Link href="/dashboard/incidents" className="mt-2 inline-block px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 transition-all border border-red-500/30">
                   Review & Submit Report →
                 </Link>
               </div>
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/30">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-xs text-emerald-600 font-semibold">Filed on time</span>
+                  <span className="text-xs text-emerald-400 font-semibold">Filed on time</span>
                 </div>
-                <div className="text-sm font-medium text-slate-900">Unauthorised data access</div>
-                <div className="text-xs text-slate-500 mt-0.5">Filed to CERT-In · 18h ago</div>
+                <div className="text-sm font-medium text-white">Unauthorised data access</div>
+                <div className="text-xs text-slate-400 mt-0.5">Filed to CERT-In · 18h ago</div>
               </div>
             </CardContent>
           </Card>

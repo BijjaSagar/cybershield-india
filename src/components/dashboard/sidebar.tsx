@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  Shield, Activity, FileText, BarChart3, AlertTriangle,
-  BookOpen, Lock, Settings, Bell, LogOut,
+  Activity, FileText, BarChart3, AlertTriangle,
+  BookOpen, Lock, Settings, Bell, LogOut, Shield,
 } from "lucide-react";
 import { UpgradeButton } from "./upgrade-button";
+import { LogoMark } from "@/components/logo";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: BarChart3 },
@@ -44,13 +45,11 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-full w-60 bg-slate-900/80 border-r border-slate-700/50 backdrop-blur-md flex flex-col z-40">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-700/50">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="font-bold text-white text-sm leading-tight">CyberShield</div>
-            <div className="text-xs text-blue-400 leading-tight">India</div>
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <LogoMark size={34} />
+          <div className="leading-tight">
+            <div className="font-bold text-white text-sm tracking-tight">CyberShield<span className="text-blue-400"> India</span></div>
+            <div className="text-[10px] text-slate-500 font-medium tracking-wider uppercase">Cyber Suraksha</div>
           </div>
         </Link>
       </div>

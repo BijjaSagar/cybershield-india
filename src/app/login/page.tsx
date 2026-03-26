@@ -4,7 +4,8 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 
 function LoginForm() {
   const router = useRouter();
@@ -40,10 +41,10 @@ function LoginForm() {
     <div className="w-full max-w-md relative">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 mb-4">
-          <Shield className="w-8 h-8 text-blue-600" />
+        <div className="inline-flex items-center justify-center mb-4">
+          <LogoMark size={52} />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">CyberShield India</h1>
+        <h1 className="text-2xl font-bold text-slate-900">CyberShield <span className="text-blue-600">India</span></h1>
         <p className="text-slate-500 text-sm mt-1">साइबर सुरक्षा · Cybersecurity SaaS for Indian SMBs</p>
       </div>
 
